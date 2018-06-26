@@ -1,0 +1,15 @@
+---
+vars:
+  storage: /storage
+  scheme: https
+  host: remote.local
+  port: 8080
+  user: batman
+  pass: robin
+app:
+  storage:
+    path: ${ opts.storage | vars.storage | user.home }
+    auth: ${ opts.auth | '${vars.user}:${vars.pass}' }
+  middleware:
+    url: ${vars.scheme}://${vars.host}:${vars.port}/api
+    user: ${opts.user | vars.user}
