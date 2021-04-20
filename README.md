@@ -13,9 +13,6 @@ on the environment, should promote reuse, and should help end-users deal with fa
 for Java runtime options, self-referencing variables, defaults, and even (complex) literals. On their own many of these features are useless but 
 by using these in concert we can create robust configuration files that are easy to work with.
 
-Configurations should also not be strictly bound to a target model. While those are useful for validation and for structured data access they can hamper
-the use of advanced features and prevent users from creating extended configuration sets.
-
 ## Use
 Let's start with a simple example:
 ```yaml

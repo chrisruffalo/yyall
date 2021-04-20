@@ -1,2 +1,6 @@
 # ignore target
 target/
+
+# ignore ide files
+.idea
+**/*.iml
