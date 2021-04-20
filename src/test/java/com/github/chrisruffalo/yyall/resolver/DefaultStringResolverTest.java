@@ -11,13 +11,13 @@ import org.yaml.snakeyaml.Yaml;
 import com.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
 
 public class DefaultStringResolverTest {
-  
+
     @Test
     @SuppressWarnings("unchecked")
     public void testNullResolve() {
         final DefaultStringResolver resolver = new DefaultStringResolver();
         Assert.assertNull("Response should be null", resolver.resolve(null, null));
-        Assert.assertNull("Response should be null", resolver.resolve(null, null, (Map<String,String>)null));
+        Assert.assertNull("Response should be null", resolver.resolve(null, null, (Map<String, String>) null));
     }
 
     @Test
@@ -30,7 +30,7 @@ public class DefaultStringResolverTest {
     public void testDefault() {
         final DefaultStringResolver resolver = new DefaultStringResolver();
         Assert.assertEquals("No change in string resolution", "no token to resolve", resolver.resolve("no token to resolve"));
-        Assert.assertTrue("${user.name} should always resolve to something", !resolver.resolve("${user.name}").isEmpty());
+        Assert.assertFalse("${user.name} should always resolve to something", resolver.resolve("${user.name}").isEmpty());
     }
 
     @Test
@@ -49,7 +49,7 @@ public class DefaultStringResolverTest {
         final String yaml = "test: value";
         final Object loadedYaml = new Yaml().load(yaml);
         final DefaultStringResolver resolver = new DefaultStringResolver();
-        final String resolved = resolver.resolve("we are ${test}ing", loadedYaml, (Map<String,String>)null);
+        final String resolved = resolver.resolve("we are ${test}ing", loadedYaml, (Map<String, String>) null);
         Assert.assertEquals("Test string must match after value is substituted.", "we are valueing", resolved);
     }
 
@@ -78,9 +78,9 @@ public class DefaultStringResolverTest {
         final String yaml = "database: postgres\nvars:\n  status: old\n  state: pending\n  path: ${vars.tmpdir}\n  tmpdir: /home/${database}";
         final Object loadedYaml = new Yaml().load(yaml);
         final DefaultStringResolver resolver = new DefaultStringResolver();
-        Assert.assertEquals("Satus is old", "old", resolver.resolve("${vars.status}", loadedYaml, (Map<String,String>)null));
-        Assert.assertEquals("State is pending", "pending", resolver.resolve("${vars.state}", loadedYaml, (Map<String,String>)null));
-        Assert.assertEquals("Path is /home/postgres", "/home/postgres", resolver.resolve("${vars.path}", loadedYaml, (Map<String,String>)null));
+        Assert.assertEquals("Status is old", "old", resolver.resolve("${vars.status}", loadedYaml, (Map<String, String>) null));
+        Assert.assertEquals("State is pending", "pending", resolver.resolve("${vars.state}", loadedYaml, (Map<String, String>) null));
+        Assert.assertEquals("Path is /home/postgres", "/home/postgres", resolver.resolve("${vars.path}", loadedYaml, (Map<String, String>) null));
     }
 
     @Test
@@ -108,7 +108,7 @@ public class DefaultStringResolverTest {
         Assert.assertEquals("Token that equals itself cannot be resolved either", "testing-${three}", resolver.resolve("testing-${three}", testProps));
         Assert.assertEquals("Token that equals itself cannot be resolved either", "${three}", resolver.resolve("${three}", testProps));
     }
-    
+
     @Test
     public void testNestedResolve() {
         final Map<String, String> testProps = new HashMap<>();
@@ -125,35 +125,35 @@ public class DefaultStringResolverTest {
         Assert.assertEquals("Nested test property should be localhost", "localhost", resolver.resolve("${${${d}nv1}.${${${lay${d}r}oc}1}}", testProps));
         Assert.assertEquals("Nested prod property should be remotehost", "remotehost", resolver.resolve("${${${d}nv2}.${${${lay${d}r}oc}2}}", testProps));
     }
-    
+
     @Test
     public void testAdditionalTokens() {
-      final Map<String, String> testProps = new HashMap<>();
-      testProps.put("actual", "answer");
-      final DefaultStringResolver resolver = new DefaultStringResolver();
-      Assert.assertEquals("Resolve property in stage one", "answer", resolver.resolve("${actual}", testProps));
-      Assert.assertEquals("Resolve property in stage two", "answer", resolver.resolve("${nothere | actual}", testProps));
-      Assert.assertEquals("Resolve property in stage three", "answer", resolver.resolve("${nope | no | actual}", testProps));
+        final Map<String, String> testProps = new HashMap<>();
+        testProps.put("actual", "answer");
+        final DefaultStringResolver resolver = new DefaultStringResolver();
+        Assert.assertEquals("Resolve property in stage one", "answer", resolver.resolve("${actual}", testProps));
+        Assert.assertEquals("Resolve property in stage two", "answer", resolver.resolve("${nothere | actual}", testProps));
+        Assert.assertEquals("Resolve property in stage three", "answer", resolver.resolve("${nope | no | actual}", testProps));
     }
-    
+
     @Test
     public void testLiteralInclusions() {
-      final Map<String, String> testProps = new HashMap<>();
-      testProps.put("user.home", "/opt/home");
-      final DefaultStringResolver resolver = new DefaultStringResolver();
-      Assert.assertEquals("Resolve literal in stage one", "literal", resolver.resolve("${ 'literal' }", testProps));
-      Assert.assertEquals("Resolve literal in stage two", "literal", resolver.resolve("${ none | \"literal\" }", testProps));
-      Assert.assertEquals("Resolve literal in stage three", "literal", resolver.resolve("${ nope | no | 'literal' }", testProps));
-      Assert.assertEquals("Resolve literal in stage three with additions", "literal", resolver.resolve("${ nope | no | 'literal' | 'nope'}", testProps));
-      Assert.assertEquals("Does not resolve mismatchced quotes", "${ 'nope\" }", resolver.resolve("${ 'nope\" }", testProps));
-      Assert.assertEquals("Does not resolve wrong quotes", "${ `nope` }", resolver.resolve("${ `nope` }", testProps));      
-      Assert.assertEquals("Resolves properties in literals", "/env/opt/home", resolver.resolve("${ '/env${user.home}' }", testProps));      
-    }    
+        final Map<String, String> testProps = new HashMap<>();
+        testProps.put("user.home", "/opt/home");
+        final DefaultStringResolver resolver = new DefaultStringResolver();
+        Assert.assertEquals("Resolve literal in stage one", "literal", resolver.resolve("${ 'literal' }", testProps));
+        Assert.assertEquals("Resolve literal in stage two", "literal", resolver.resolve("${ none | \"literal\" }", testProps));
+        Assert.assertEquals("Resolve literal in stage three", "literal", resolver.resolve("${ nope | no | 'literal' }", testProps));
+        Assert.assertEquals("Resolve literal in stage three with additions", "literal", resolver.resolve("${ nope | no | 'literal' | 'nope'}", testProps));
+        Assert.assertEquals("Does not resolve mismatched quotes", "${ 'nope\" }", resolver.resolve("${ 'nope\" }", testProps));
+        Assert.assertEquals("Does not resolve wrong quotes", "${ `nope` }", resolver.resolve("${ `nope` }", testProps));
+        Assert.assertEquals("Resolves properties in literals", "/env/opt/home", resolver.resolve("${ '/env${user.home}' }", testProps));
+    }
 
     @Test
     public void testHomeDir() {
         final DefaultStringResolver resolver = new DefaultStringResolver();
         Assert.assertEquals("Home directory equals user.home system property", System.getProperty("user.home") + "/path", resolver.resolve("${user.home}/path"));
     }
-  
+
 }

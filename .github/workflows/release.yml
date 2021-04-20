@@ -1,0 +1,92 @@
+name: Build Syndo Release Artifacts
+on:
+  push:
+    branches:
+      - release-*
+    tags:
+      - release-*
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+      - name: Build with Maven
+        run: mvn --batch-mode --update-snapshots package
+
+      - name: Capture branch info (prerelease/branch)
+        if: contains(github.ref, 'refs/heads/')
+        run: |
+          echo "PRERELEASE=true" >> $GITHUB_ENV
+          echo "TAG_PREFIX=prerelease-" >> $GITHUB_ENV
+
+      - name: Capture branch info (release/tag)
+        if: "!contains(github.ref, 'refs/heads/')"
+        run: |
+          echo "PRERELEASE=false" >> $GITHUB_ENV
+          echo "TAG_PREFIX=release-" >> $GITHUB_ENV
+
+      - name: Capture metadata
+        run: |
+          echo "POM_VER=$(mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          echo "SHORT_BRANCH=$(echo \"${GITHUB_REF##*/}\")" >> $GITHUB_ENV
+
+      - name: Delete release/tag if it exists
+        uses: dev-drprasad/delete-tag-and-release@v0.2.0
+        with:
+          delete_release: true
+          tag_name: ${{ env.TAG_PREFIX }}${{ env.POM_VER }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          name: ${{ env.SHORT_BRANCH }}
+          tag: ${{ env.TAG_PREFIX }}${{ env.POM_VER }}
+          prerelease: ${{ env.PRERELEASE }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit: ${{ github.sha }}
+          artifacts: "target/yyall-*.jar"
+          replacesArtifacts: true
+
+      - name: Delete Snapshot
+        if: contains(github.ref, 'refs/heads/')
+        uses: WyriHaximus/github-action-delete-package@master
+        with:
+          packageVersionId: ${{ env.POM_VER }}-SNAPSHOT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete Release
+        if: "!contains(github.ref, 'refs/heads/')"
+        uses: WyriHaximus/github-action-delete-package@master
+        with:
+          packageVersionId: ${{ env.POM_VER }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Snapshot
+        if: contains(github.ref, 'refs/heads/')
+        run: mvn -Drevision=${{ env.POM_VER }}-SNAPSHOT --batch-mode clean deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Release
+        if: "!contains(github.ref, 'refs/heads/')"
+        run: mvn --batch-mode deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

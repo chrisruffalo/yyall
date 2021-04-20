@@ -27,7 +27,7 @@ public class DefaultStringResolver implements StringResolver {
   private String endToken = DEFAULT_END_TOKEN;
   private String pipeToken = DEFAULT_PIPE_TOKEN;
   
-  private Set<String> literalQuoteSet = new HashSet<>();
+  private final Set<String> literalQuoteSet = new HashSet<>();
   
   private Pattern tokenPattern = null;
   
@@ -114,7 +114,7 @@ public class DefaultStringResolver implements StringResolver {
         // (so that we can't get stuck resolving and re-resolving the same properties)
         final Set<String> previousValues = new HashSet<>();
 
-        return this.resolve("", new HashSet<String>(), previousValues, inputString, yaml, properties);
+        return this.resolve("", new HashSet<>(), previousValues, inputString, yaml, properties);
     }
 
     private String resolve(final String prefix, final Set<String> guardPropertySet, final Set<String> previousValues, final String inputString, final Object yaml, final Map<String, String> properties) {
@@ -187,12 +187,11 @@ public class DefaultStringResolver implements StringResolver {
                     // get prefix
                     String foundPrefix = "";
                     if(currentToken.lastIndexOf(".") >= 1) {
-                      foundPrefix = currentToken.substring(0);
+                      foundPrefix = currentToken;
                     }
                     
                     // resolve property before replacing
-                    final HashSet<String> resolveGuardSet = new HashSet<>();
-                    resolveGuardSet.addAll(guardPropertySet);
+                    final HashSet<String> resolveGuardSet = new HashSet<>(guardPropertySet);
                     resolveGuardSet.add(currentToken);
                     final String resolvedProperty = this.resolve(foundPrefix, resolveGuardSet, previousValues, property, yaml, properties);
   

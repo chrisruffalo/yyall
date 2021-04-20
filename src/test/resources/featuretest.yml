@@ -8,8 +8,15 @@ vars:
   pass: robin
 app:
   storage:
-    path: ${ opts.storage | vars.storage | user.home }
+    path: ${ opts.storage | vars.storage | user.home }/.storage/
     auth: ${ opts.auth | '${vars.user}:${vars.pass}' }
   middleware:
     url: ${vars.scheme}://${vars.host}:${vars.port}/api
     user: ${opts.user | vars.user}
+reference:
+  user: ${USER | user.name}
+  home: ${user.home | HOME}
+  nonsense: ${user.nonsense | 'no resolution'}
+  recursive: ${reference.recursive}
+  second: ${reference.recursive}
+  bad: ${reference.unknown}
