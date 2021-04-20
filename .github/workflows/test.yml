@@ -1,7 +1,12 @@
 name: Test Workflow
 on:
-  - push
-  - pull_request
+  push:
+    branches-ignore:
+      - release-*
+    tags-ignore:
+      - release-*
+      - prerelease-*
+  pull_request: {}
 jobs:
   verify:
     runs-on: ubuntu-latest
