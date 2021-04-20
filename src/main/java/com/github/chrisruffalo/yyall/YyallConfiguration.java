@@ -104,6 +104,10 @@ public class YyallConfiguration {
         return new ByteArrayInputStream(resolvedString.getBytes());
     }
 
+    public String resolveString() {
+        return YAML.dump(this.resolve());
+    }
+
     private Object resolve(final String property) {
         final HashSet<String> guardSet = new HashSet<>();
         guardSet.add(property);

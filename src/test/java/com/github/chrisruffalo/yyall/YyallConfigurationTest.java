@@ -22,7 +22,7 @@ public class YyallConfigurationTest {
     }
 
     @Test
-    public void testResolve() {
+    public void testResolveAs() {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
         final Root root = conf.resolveAs(Root.class);
 
@@ -41,13 +41,17 @@ public class YyallConfigurationTest {
     }
 
     @Test
-    public void testResolveStream() {
+    public void testResolveTo() {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
         final InputStream resolvedStream = conf.resolveStream();
         final YyallConfiguration conf2 = YyallConfiguration.load(resolvedStream);
+        final YyallConfiguration conf3 = YyallConfiguration.load(conf.resolveString());
 
         Assert.assertEquals("Nonsense does not resolve", "no resolution", conf2.get("reference.nonsense"));
         Assert.assertEquals("Format works on non-variable stream", conf.format("${reference.home}"), conf2.format("${reference.home}"));
+
+        Assert.assertEquals("Nonsense does not resolve", "no resolution", conf3.get("reference.nonsense"));
+        Assert.assertEquals("Format works on non-variable stream", conf.format("${reference.home}"), conf3.format("${reference.home}"));
     }
 
 }
