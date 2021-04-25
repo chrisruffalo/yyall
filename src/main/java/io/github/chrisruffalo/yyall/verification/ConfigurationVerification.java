@@ -1,4 +1,4 @@
-package com.github.chrisruffalo.yyall.verification;
+package io.github.chrisruffalo.yyall.verification;
 
 public interface ConfigurationVerification {
   

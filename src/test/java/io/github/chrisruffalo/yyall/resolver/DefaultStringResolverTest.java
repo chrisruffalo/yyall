@@ -1,4 +1,4 @@
-package com.github.chrisruffalo.yyall.resolver;
+package io.github.chrisruffalo.yyall.resolver;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,8 +7,6 @@ import org.junit.Assert;
 
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
-
-import com.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
 
 public class DefaultStringResolverTest {
 

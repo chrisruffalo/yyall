@@ -1,4 +1,4 @@
-package com.github.chrisruffalo.yyall.model;
+package io.github.chrisruffalo.yyall.model;
 
 public class Reference {
 

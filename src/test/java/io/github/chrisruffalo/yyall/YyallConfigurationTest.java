@@ -1,9 +1,8 @@
-package com.github.chrisruffalo.yyall;
+package io.github.chrisruffalo.yyall;
 
-import com.github.chrisruffalo.yyall.model.Root;
+import io.github.chrisruffalo.yyall.model.Root;
 import org.junit.Assert;
 import org.junit.Test;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.InputStream;
 
@@ -52,6 +51,13 @@ public class YyallConfigurationTest {
 
         Assert.assertEquals("Nonsense does not resolve", "no resolution", conf3.get("reference.nonsense"));
         Assert.assertEquals("Format works on non-variable stream", conf.format("${reference.home}"), conf3.format("${reference.home}"));
+    }
+
+    @Test
+    public void testResolveNested() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals("Nested literal and variable are resolved correctly", "http://localhost:8080/api", conf.format("${ given.host | 'http://localhost:${vars.port | '9090'}/api'}"));
+
     }
 
 }
