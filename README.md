@@ -29,20 +29,29 @@ app:
 
 This example allows you to access both individual properties and pre-formatted strings as with the following example:
 ```java
-final YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
-final String port = conf.get("app.db.port");
+YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
+String port = conf.get("app.db.port");
 ```
 
 You can also use the same token language to get a more complex resolution:
 ```java
-final YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
-final String complex = conf.format("You can go to the url @ ${app.api}/docs to see the API documents")
+YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
+String complex = conf.format("You can go to the url @ ${app.api}/docs to see the API documents")
 ```
+
 The language supports more features such as multiple resolution variables, literals, and nested resolution
 ```java
 final YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
 // resolve opts.api (could be a passed in java option), the yaml value app.api, or use the default localhost value
-final String multi = conf.get("${ opts.api | app.api | 'http://localhost:9090/api' }")
+String multi = conf.format("${ opts.api | app.api | 'http://localhost:9090/api' }")
 // same thing but with nested resolution of port value, notice that literals **always** go in quotes
-final String multi = conf.get("${ opts.api | app.api | 'http://localhost:${app.port | '9090'}/api' }")
+String nested = conf.format("${ opts.api | app.api | 'http://localhost:${app.port | '9090'}/api' }")
+```
+
+An entire YAML can be resolved all at once:
+```java
+final YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
+Object yaml = conf.resolve();
+String yamlString = conf.resovleString();
+InputStream yamlStream = conf.resolveStream();
 ```

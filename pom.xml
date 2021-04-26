@@ -4,29 +4,23 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
    
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.github.chrisruffalo</groupId>
+  <groupId>io.github.chrisruffalo.yyall</groupId>
   <artifactId>yyall</artifactId>
   <packaging>jar</packaging>
   <version>${revision}</version>
 
   <properties>
-    <revision>1.1</revision>
+    <revision>1.2</revision>
 
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
+
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <scm>
     <developerConnection>scm:git:https://github.com/chrisruffalo/yyall.git</developerConnection>
   </scm>
-
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/chrisruffalo/yyall</url>
-    </repository>
-  </distributionManagement>
 
   <dependencies>
     <!-- yaml reading -->
@@ -57,5 +51,80 @@
       <version>4.13.2</version>
       <scope>test</scope>
     </dependency>
-  </dependencies> 
+  </dependencies>
+
+  <profiles>
+    <!-- profile configured for github distribution -->
+    <profile>
+      <id>github-distribution</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/chrisruffalo/yyall</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+
+    <!-- profile configured for sonatype/maven central distribution -->
+    <profile>
+      <id>ossrh-distribution</id>
+      <activation>
+        <activeByDefault>false</activeByDefault>
+      </activation>
+      <distributionManagement>
+        <repository>
+          <id>ossrh</id>
+          <name>OSSRH Sonatype Nexus</name>
+          <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <name>OSSRH Sonatype Nexus</name>
+          <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+        </snapshotRepository>
+      </distributionManagement>
+      <build>
+        <plugins>
+          <!-- gpg signing -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <!-- ossh deployment -->
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.8</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh</serverId>
+              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

@@ -1,4 +1,4 @@
-package com.github.chrisruffalo.yyall.resolver;
+package io.github.chrisruffalo.yyall.resolver;
 
 import java.util.ArrayList;
 import java.util.Arrays;

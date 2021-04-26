@@ -1,10 +1,7 @@
-package com.github.chrisruffalo.yyall;
+package io.github.chrisruffalo.yyall;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -14,13 +11,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
 import org.apache.commons.beanutils.BeanUtils;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import com.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
-import com.github.chrisruffalo.yyall.resolver.StringResolver;
+import io.github.chrisruffalo.yyall.resolver.StringResolver;
 
 public class YyallConfiguration {
 
@@ -102,6 +98,10 @@ public class YyallConfiguration {
             resolvedString = "";
         }
         return new ByteArrayInputStream(resolvedString.getBytes());
+    }
+
+    public String resolveString() {
+        return YAML.dump(this.resolve());
     }
 
     private Object resolve(final String property) {
