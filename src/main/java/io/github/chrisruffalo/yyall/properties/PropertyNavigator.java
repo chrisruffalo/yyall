@@ -17,7 +17,8 @@ public class PropertyNavigator {
             try {
                 gotten = PropertyUtils.getProperty(gotten == null ? object : gotten, current.segment());
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-                // can't do anything about this
+                // can't do anything about this and can't go further
+                return null;
             }
             if (gotten == null) {
                 break;
