@@ -3,6 +3,11 @@
 ## Overview
 Yaml for Y'all (yyall) is a yaml-based configuration library that uses SnakeYAML to read YAML configurations and provide extra usability on top.
 
+## Features
+* Resolve tokenized properties (like ${token}) from system properties, environment variables, and other properties in the yaml
+* Resolve properties with multiple fallback scenarios
+* Load resolved properties into object model, string, or stream
+
 ## Motivation
 Configurations should be easy to use from code, requiring a minimum of bootstraping to get started. This is accomplished in yyall 
 by allowing the user to start from just the factory pattern in `com.github.chrisruffalo.yall.YyallConfiguration` accessed via the `load()` method. 
