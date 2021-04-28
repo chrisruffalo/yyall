@@ -2,21 +2,33 @@ package io.github.chrisruffalo.yyall;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.github.chrisruffalo.yyall.properties.PropertyNavigator;
 import io.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import io.github.chrisruffalo.yyall.resolver.StringResolver;
+import org.yaml.snakeyaml.constructor.BaseConstructor;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.representer.Representer;
 
 public class YyallConfiguration {
 
@@ -45,55 +57,21 @@ public class YyallConfiguration {
         return this.resolver.resolve(inputString, this.rootYamlObject, this.resolver.defaultProperties(), additionalProperties);
     }
 
-    private void getAllProperties(final Object yaml, final String prefix, final Map<Object, Object> propertiesCollector, final StringResolver resolver) {
-        if (yaml == null) {
-            return;
-        }
-
-        if (yaml instanceof Iterable) {
-            for(final Object object : (Iterable<?>) yaml) {
-                getAllProperties(object, "", propertiesCollector, resolver);
-            }
-        }
-
-        if (yaml instanceof Map) {
-            for(final Map.Entry<?, ?> entry : ((Map<?,?>) yaml).entrySet()) {
-                final Object key = entry.getKey();
-                if ( key == null ) {
-                    continue;
-                }
-                final String keyString = (key instanceof String) ? (String)key : key.toString();
-                final Object value = entry.getValue();
-                if (value instanceof Map) {
-                    final Map<Object, Object> subMap = new LinkedHashMap<>();
-                    propertiesCollector.put(keyString, subMap);
-                    this.getAllProperties(value, String.format("%s%s.", prefix, keyString), subMap, resolver);
-                } else {
-                    final String propertyKey = String.format("%s%s", prefix, keyString);
-                    propertiesCollector.put(key, this.get(propertyKey));
-                }
-            }
-        }
-    }
-
     /**
      * Returns a YAML object that has all of the child properties resolved.
      *
      * @return the root yaml object for this instance but with all the properties resolved using the current properties/environment
      */
     public Object resolve() {
-        final Map<Object, Object> properties = new LinkedHashMap<>();
-        this.getAllProperties(rootYamlObject, "", properties, resolver);
-        return properties;
+        return YAML.load(this.resolveString());
     }
 
     public <T> T resolveAs(Class<T> targetClass) {
-        final Object resolved = this.resolve();
-        return YAML.loadAs(YAML.dump(resolved), targetClass);
+        return YAML.loadAs(this.resolveString(), targetClass);
     }
 
     public InputStream resolveStream() {
-        String resolvedString = YAML.dump(this.resolve());
+        String resolvedString = this.resolveString();
         if (resolvedString == null) {
             resolvedString = "";
         }
@@ -101,7 +79,7 @@ public class YyallConfiguration {
     }
 
     public String resolveString() {
-        return YAML.dump(this.resolve());
+        return this.format(YAML.dump(this.rootYamlObject));
     }
 
     private Object resolve(final String property) {
@@ -122,13 +100,7 @@ public class YyallConfiguration {
         }
 
         // attempt to get property from object
-        Object value = null;
-        try {
-            value = BeanUtils.getProperty(this.rootYamlObject, property);
-        } catch (final Exception e) {
-            // no value found, return null
-            return null;
-        }
+        final Object value = PropertyNavigator.getProperty(this.rootYamlObject, property);
 
         // simple, got a null value... return a null value
         if(value == null) {
@@ -136,7 +108,12 @@ public class YyallConfiguration {
         }
 
         // if the value can be treated as a string, do so
-        final String valueString = value.toString();
+        String valueString = null;
+        if (value instanceof String) {
+            valueString = (String)value;
+        } else {
+            valueString = value.toString();
+        }
 
         // return result
         return this.resolver.resolve(valueString, this.rootYamlObject);
@@ -173,9 +150,13 @@ public class YyallConfiguration {
     }
 
     private static Yaml createYaml() {
+        final Representer representer = new Representer();
+        representer.getPropertyUtils().setSkipMissingProperties(true);
+
         final DumperOptions dumperOptions = new DumperOptions();
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         dumperOptions.setPrettyFlow(true);
-        return new Yaml(dumperOptions);
+
+        return new Yaml(representer, dumperOptions);
     }
 }

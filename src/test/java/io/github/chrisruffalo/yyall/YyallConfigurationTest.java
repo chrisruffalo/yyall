@@ -57,7 +57,7 @@ public class YyallConfigurationTest {
     public void testResolveNested() {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
         Assert.assertEquals("Nested literal and variable are resolved correctly", "http://localhost:8080/api", conf.format("${ given.host | 'http://localhost:${vars.port | '9090'}/api'}"));
-
+        Assert.assertEquals("Listed variables are resolved correctly", "robin", conf.format("${ vars.pass }"));
     }
 
 }

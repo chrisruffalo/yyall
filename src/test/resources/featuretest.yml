@@ -5,7 +5,18 @@ vars:
   host: remote.local
   port: 8080
   user: batman
-  pass: robin
+  pass: ${vars.list[0]}
+  list:
+    - robin
+    - two
+    - three
+    - ${vars.list[2]}
+    - ${vars.pass}
+    - ${vars.user}
+    - - one
+      - two
+      - three
+      - "${vars.list[6][2]}"
 app:
   storage:
     path: ${ opts.storage | vars.storage | user.home }/.storage/

@@ -1,5 +1,6 @@
 package io.github.chrisruffalo.yyall.resolver;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,7 +14,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import io.github.chrisruffalo.yyall.properties.PropertyNavigator;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -167,16 +170,13 @@ public class DefaultStringResolver implements StringResolver {
                   // next, if the property is still null, try and read yaml
                   // (nested maps - which the yaml object is - can be read with BeanUtils)
                   if(property == null && yaml != null) {
-                      try {
-                          Object found = BeanUtils.getProperty(yaml, currentToken);
-                          if(found != null) {
-                              property = found.toString();
-                          }
-                      } catch (Exception e) {
-                          // no-op
+                      //final Object found = PropertyUtils.getProperty(yaml, currentToken);
+                      final Object found = PropertyNavigator.getProperty(yaml, currentToken);
+                      if(found != null) {
+                          property = found.toString();
                       }
                   }
-  
+
                   // if the property is still null look it up
                   if(property == null) {
                       property = properties.get(currentToken);
