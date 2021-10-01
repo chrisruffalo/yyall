@@ -112,7 +112,7 @@ public class YyallConfigurationTest {
     public void testMixedMode() {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
         // on github actions "user.home" is null, thanks github actions
-        Assert.assertEquals(System.getProperty("user.home") == null ? "none" : System.getProperty("user.home"), conf.get("multi.home"));
-        Assert.assertEquals("nouser", conf.withoutEnvironmentVariables().withoutSystemProperties().get("multi.home"));
+        Assert.assertEquals(System.getProperty("user.home") == null ? "nohome" : System.getProperty("user.home"), conf.get("multi.home"));
+        Assert.assertEquals("nohome", conf.withoutEnvironmentVariables().withoutSystemProperties().get("multi.home"));
     }
 }

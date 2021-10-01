@@ -58,4 +58,4 @@ system:
 env:
   tmp: ${TMP | TEMP | 'none'}
 multi:
-  home: ${HOME | user.home | 'nouser'}
+  home: ${HOME | user.home | 'nohome'}

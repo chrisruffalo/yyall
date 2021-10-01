@@ -54,6 +54,7 @@ public class YyallConfiguration {
         }
 
         final YyallConfiguration clone = new YyallConfiguration(this.rootYamlObject, resolver, sources.toArray(new PropertySource[0]));
+        clone.useEnvironmentProperties = this.useEnvironmentProperties;
         clone.useSystemProperties = false;
         return clone;
     }
@@ -64,6 +65,7 @@ public class YyallConfiguration {
         }
 
         final YyallConfiguration clone = new YyallConfiguration(this.rootYamlObject, resolver, sources.toArray(new PropertySource[0]));
+        clone.useSystemProperties = this.useSystemProperties;
         clone.useEnvironmentProperties = false;
         return clone;
     }
