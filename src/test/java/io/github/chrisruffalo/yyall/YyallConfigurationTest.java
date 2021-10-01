@@ -87,6 +87,8 @@ public class YyallConfigurationTest {
         Assert.assertEquals("value", conf.get("depth.b"));
         Assert.assertEquals("value value value", conf.format("${depth.a} ${depth.b} ${depth.a}"));
         Assert.assertEquals("${depth.h[5]}", conf.get("depth.k"));
+        // todo: 1.6, make recursion / cyclic bail to the default value
+        // Assert.assertEquals("default", conf.format("${ none | depth.k | 'default'}"));
     }
 
     @Test
@@ -108,7 +110,8 @@ public class YyallConfigurationTest {
     @Test
     public void testMixedMode() {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
-        Assert.assertEquals(System.getProperty("user.home"), conf.get("multi.home"));
+        // on github actions "user.home" is null, thanks github actions
+        Assert.assertEquals(System.getProperty("user.home") == null ? "none" : System.getProperty("user.home"), conf.get("multi.home"));
         Assert.assertEquals("nouser", conf.withoutSystemProperties().get("multi.home"));
         Assert.assertEquals("nouser", conf.withoutEnvironmentVariables().withoutSystemProperties().get("multi.home"));
     }
