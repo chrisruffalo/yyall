@@ -1,4 +1,3 @@
----
 vars:
   storage: /storage
   scheme: https
@@ -31,3 +30,32 @@ reference:
   recursive: ${reference.recursive}
   second: ${reference.recursive}
   bad: ${reference.unknown}
+cyclic:
+  a: ${cyclic.b}
+  b: ${cyclic.a}
+  c: value
+  d: ${cyclic.c}
+depth:
+  a: ${depth.b}
+  b: ${depth.c}
+  c: ${depth.d}
+  d: ${depth.e}
+  e: ${depth.f}
+  f: ${depth.g}
+  g: ${depth.h[2]}
+  h:
+    - none
+    - none
+    - ${depth.i}
+    - none
+    - ${depth.j}
+    - ${depth.k}
+  i: ${depth.h[4]}
+  j: value
+  k: ${depth.h[5]}
+system:
+  value: ${custom.system.property}
+env:
+  tmp: ${TMP | TEMP | 'none'}
+multi:
+  home: ${HOME | user.home | 'nohome'}

@@ -2,32 +2,21 @@ package io.github.chrisruffalo.yyall;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import io.github.chrisruffalo.yyall.properties.PropertyNavigator;
+import io.github.chrisruffalo.yyall.bean.PropertyNavigator;
+import io.github.chrisruffalo.yyall.properties.EnvironmentVariableSource;
+import io.github.chrisruffalo.yyall.properties.PropertySource;
+import io.github.chrisruffalo.yyall.properties.SystemPropertiesSource;
 import io.github.chrisruffalo.yyall.resolver.DefaultStringResolver;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.apache.commons.beanutils.PropertyUtilsBean;
+import org.apache.commons.lang3.StringUtils;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import io.github.chrisruffalo.yyall.resolver.StringResolver;
-import org.yaml.snakeyaml.constructor.BaseConstructor;
-import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 public class YyallConfiguration {
@@ -38,14 +27,73 @@ public class YyallConfiguration {
 
     private final StringResolver resolver;
 
-    private YyallConfiguration(final Object rootYamlObject, final StringResolver resolver) {
+    private final Set<PropertySource> sources = new HashSet<>();
+
+    private boolean useEnvironmentProperties = true;
+    private boolean useSystemProperties = true;
+
+    private YyallConfiguration(final Object rootYamlObject, final StringResolver resolver, PropertySource... propertySources) {
         this.rootYamlObject = rootYamlObject;
         this.resolver = resolver;
+        if(propertySources != null) {
+            this.sources.addAll(Arrays.asList(propertySources));
+        }
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> T get(final String property) {
-        return (T)this.resolve(property);
+    public YyallConfiguration withProperties(final PropertySource... propertySources) {
+        final YyallConfiguration clone = new YyallConfiguration(this.rootYamlObject, resolver, sources.toArray(new PropertySource[0]));
+        if(propertySources != null) {
+            clone.sources.addAll(Arrays.asList(propertySources));
+        }
+        return clone;
+    }
+
+    public YyallConfiguration withoutSystemProperties() {
+        if (!useSystemProperties) {
+            return this;
+        }
+
+        final YyallConfiguration clone = new YyallConfiguration(this.rootYamlObject, resolver, sources.toArray(new PropertySource[0]));
+        clone.useEnvironmentProperties = this.useEnvironmentProperties;
+        clone.useSystemProperties = false;
+        return clone;
+    }
+
+    public YyallConfiguration withoutEnvironmentVariables() {
+        if (!useEnvironmentProperties) {
+            return this;
+        }
+
+        final YyallConfiguration clone = new YyallConfiguration(this.rootYamlObject, resolver, sources.toArray(new PropertySource[0]));
+        clone.useSystemProperties = this.useSystemProperties;
+        clone.useEnvironmentProperties = false;
+        return clone;
+    }
+
+    private Map<String, String> resolvePropertiesFromSources() {
+        // don't do anything if sources is empty
+        if (sources.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        final Map<String, String> allProperties = new HashMap<>();
+        this.sources.forEach(source -> {
+            if (source == null) {
+                return;
+            }
+            if (!useEnvironmentProperties && source instanceof EnvironmentVariableSource) {
+                return;
+            }
+            if (!useSystemProperties && source instanceof SystemPropertiesSource) {
+                return;
+            }
+           allProperties.putAll(source.getProperties());
+        });
+        return allProperties;
+    }
+
+    public String get(final String property) {
+        return this.resolve(property);
     }
 
     public String format(final String inputString) {
@@ -54,7 +102,7 @@ public class YyallConfiguration {
 
     @SuppressWarnings("unchecked")
     public String format(final String inputString, Map<String, String> additionalProperties) {
-        return this.resolver.resolve(inputString, this.rootYamlObject, this.resolver.defaultProperties(), additionalProperties);
+        return this.resolver.resolve(inputString, this.rootYamlObject, this.resolver.defaultProperties(), resolvePropertiesFromSources(), additionalProperties);
     }
 
     /**
@@ -82,13 +130,14 @@ public class YyallConfiguration {
         return this.format(YAML.dump(this.rootYamlObject));
     }
 
-    private Object resolve(final String property) {
-        final HashSet<String> guardSet = new HashSet<>();
-        guardSet.add(property);
-        return this.resolve("", property, guardSet, new HashSet<>(), new HashMap<>());
-    }
-
-    private Object resolve(final String base, final String property, final Set<String> guard, final Set<String> cyclic, final Map<String, String> alreadyResolved) {
+    /**
+     * Resolve a single property by repeatedly formatting it until it stabilizes. Relies on format() for the
+     * details of the resolution.
+     *
+     * @param property property value to resolve
+     * @return the resolved string, null if not present or not resolvable
+     */
+    private String resolve(final String property) {
         // no configuration root
         if(this.rootYamlObject == null) {
             return null;
@@ -103,20 +152,26 @@ public class YyallConfiguration {
         final Object value = PropertyNavigator.getProperty(this.rootYamlObject, property);
 
         // simple, got a null value... return a null value
-        if(value == null) {
+        if (value == null) {
             return null;
         }
 
         // if the value can be treated as a string, do so
         String valueString = null;
         if (value instanceof String) {
-            valueString = (String)value;
+            valueString = (String) value;
         } else {
             valueString = value.toString();
         }
 
-        // return result
-        return this.resolver.resolve(valueString, this.rootYamlObject);
+        String previous;
+        // recursively resolve result
+        do {
+            previous = valueString;
+            valueString = format(valueString);
+        } while(!StringUtils.equals(valueString, previous)); // use string utils because either could be null
+
+        return valueString;
     }
 
     public boolean put(final String key, final Object value) {
@@ -133,7 +188,7 @@ public class YyallConfiguration {
     public static YyallConfiguration load(final String pathToConfig, final StringResolver resolver) {
         final Path path = Paths.get(pathToConfig).normalize().toAbsolutePath();
         final Object loaded = YAML.load(path.normalize().toString());
-        return new YyallConfiguration(loaded, resolver);
+        return new YyallConfiguration(loaded, resolver, defaultSources());
     }
 
     public static YyallConfiguration load(final String pathToConfig) {
@@ -142,11 +197,18 @@ public class YyallConfiguration {
 
     public static YyallConfiguration load(final InputStream inputStream, final StringResolver resolver) {
         final Object loaded = YAML.load(inputStream);
-        return new YyallConfiguration(loaded, resolver);
+        return new YyallConfiguration(loaded, resolver, defaultSources());
     }
 
     public static YyallConfiguration load(final InputStream inputStream) {
         return load(inputStream, new DefaultStringResolver());
+    }
+
+    private static PropertySource[] defaultSources() {
+        return new PropertySource[]{
+            new EnvironmentVariableSource(),
+            new SystemPropertiesSource()
+        };
     }
 
     private static Yaml createYaml() {

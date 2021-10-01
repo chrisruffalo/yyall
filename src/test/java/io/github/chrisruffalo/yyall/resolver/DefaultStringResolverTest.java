@@ -147,11 +147,4 @@ public class DefaultStringResolverTest {
         Assert.assertEquals("Does not resolve wrong quotes", "${ `nope` }", resolver.resolve("${ `nope` }", testProps));
         Assert.assertEquals("Resolves properties in literals", "/env/opt/home", resolver.resolve("${ '/env${user.home}' }", testProps));
     }
-
-    @Test
-    public void testHomeDir() {
-        final DefaultStringResolver resolver = new DefaultStringResolver();
-        Assert.assertEquals("Home directory equals user.home system property", System.getProperty("user.home") + "/path", resolver.resolve("${user.home}/path"));
-    }
-
 }
