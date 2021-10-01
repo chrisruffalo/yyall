@@ -86,6 +86,7 @@ public class YyallConfigurationTest {
         Assert.assertEquals("value", conf.get("depth.a"));
         Assert.assertEquals("value", conf.get("depth.b"));
         Assert.assertEquals("value value value", conf.format("${depth.a} ${depth.b} ${depth.a}"));
+        Assert.assertEquals("${depth.h[5]}", conf.get("depth.k"));
     }
 
     @Test

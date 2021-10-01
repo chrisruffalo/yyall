@@ -49,8 +49,10 @@ depth:
     - ${depth.i}
     - none
     - ${depth.j}
+    - ${depth.k}
   i: ${depth.h[4]}
   j: value
+  k: ${depth.h[5]}
 system:
   value: ${custom.system.property}
 env:
