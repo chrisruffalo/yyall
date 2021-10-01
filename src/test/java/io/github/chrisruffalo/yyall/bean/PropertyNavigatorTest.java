@@ -1,11 +1,9 @@
-package io.github.chrisruffalo.yyall.properties;
+package io.github.chrisruffalo.yyall.bean;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-
-import java.util.Map;
 
 public class PropertyNavigatorTest {
 

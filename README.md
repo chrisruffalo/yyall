@@ -74,10 +74,34 @@ String home = conf.format("${ app.home | HOME | user.home }");
 String home = conf.format("${ app.format | 'modern' }");  
 ```
 
-An entire YAML can be resolved all at once:
+In order to resolve without system properties or environment variables you can get a copy of the YyallConfiguration object
+that disables the default sources with:
+```java
+// get a new object with no system properties
+YyallConfiguration noSystemProperties = conf.withoutSystemProperties();
+// get a new object with no environment properties
+YyallConfiguration noEnvProperties = conf.withoutEnvironmentVariables();
+// get a new object with neither
+YyallConfiguration noDefaultProperties = conf.withoutEnvironmentVariables().withoutSystemProperties();
+```
+
+You can add additional property sources with:
+```java
+YyallConfiguration withSources = conf.withPropertySources(new CustomSource(), new OtherCustomSource());
+// you can still disable the system/environment properties as well
+YyallConfiguration withSourcesButNoDefaults = conf.withoutEnvironmentVariables().withoutSystemProperties().withPropertySources(new CustomSource(), new OtherCustomSource());
+```
+
+An entire YAML can be resolved all at once causing the properties to be fully resolved:
 ```java
 YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
 Object yaml = conf.resolve();
 String yamlString = conf.resovleString();
 InputStream yamlStream = conf.resolveStream();
+```
+
+A yaml file can also be resolved into a Java Object:
+```
+YyallConfiguration conf = YyallConfiguration.load("/path/to/file.yml");
+conf.
 ```

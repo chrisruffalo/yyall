@@ -1,10 +1,25 @@
-package io.github.chrisruffalo.yyall.properties;
+package io.github.chrisruffalo.yyall.bean;
 
 import org.apache.commons.beanutils.PropertyUtils;
 
 import java.lang.reflect.InvocationTargetException;
 
 public class PropertyNavigator {
+
+    public static boolean hasProperty(final Object object, final String property) {
+        Property reference = Property.parse(property);
+        try {
+            while(reference.hasNext()) {
+                if (null == PropertyUtils.getProperty(object, reference.segment())) {
+                    return false;
+                };
+                reference = reference.next();
+            }
+        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            return false;
+        }
+        return true;
+    }
 
     public static Object getProperty(final Object object, final String property) {
         return getProperty(object, Property.parse(property));

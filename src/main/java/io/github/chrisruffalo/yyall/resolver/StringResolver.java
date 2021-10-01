@@ -1,5 +1,6 @@
 package io.github.chrisruffalo.yyall.resolver;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -18,9 +19,13 @@ public interface StringResolver {
 
     String resolve(final String inputString, final Map<String, String> properties);
 
-    @SuppressWarnings("unchecked")
     String resolve(final String inputString, final Object yaml, final Map<String, String>... propertyMaps);
-    
-    Map<String, String> defaultProperties();
+
+    /**
+     * Allows the resolver itself to inject additional properties. By default returns an empty map.
+     *
+     * @return the default properties to use with this resolver
+     */
+    default Map<String, String> defaultProperties() { return Collections.emptyMap(); }
 
 }

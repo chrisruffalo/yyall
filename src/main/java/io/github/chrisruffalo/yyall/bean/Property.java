@@ -1,4 +1,4 @@
-package io.github.chrisruffalo.yyall.properties;
+package io.github.chrisruffalo.yyall.bean;
 
 import org.apache.commons.lang3.StringUtils;
 

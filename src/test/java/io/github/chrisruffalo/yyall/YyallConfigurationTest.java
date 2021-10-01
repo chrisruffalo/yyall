@@ -4,6 +4,7 @@ import io.github.chrisruffalo.yyall.model.Root;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public class YyallConfigurationTest {
@@ -44,7 +45,7 @@ public class YyallConfigurationTest {
         final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
         final InputStream resolvedStream = conf.resolveStream();
         final YyallConfiguration conf2 = YyallConfiguration.load(resolvedStream);
-        final YyallConfiguration conf3 = YyallConfiguration.load(conf.resolveString());
+        final YyallConfiguration conf3 = YyallConfiguration.load(new ByteArrayInputStream(conf2.resolveString().getBytes()));
 
         Assert.assertEquals("Nonsense does not resolve", "no resolution", conf2.get("reference.nonsense"));
         Assert.assertEquals("Format works on non-variable stream", conf.format("${reference.home}"), conf2.format("${reference.home}"));
@@ -60,4 +61,54 @@ public class YyallConfigurationTest {
         Assert.assertEquals("Listed variables are resolved correctly", "robin", conf.format("${ vars.pass }"));
     }
 
+    @Test
+    public void testResolveCyclic() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        // cyclic.a resolves to ${cyclic.b} which resolves to cyclic.b which is literally ${cyclic.a} and at that point the
+        // engine knows that it is cyclic and stops
+        Assert.assertEquals("${cyclic.a}", conf.format("${cyclic.a}"));
+        Assert.assertEquals("${cyclic.b}", conf.get("cyclic.a")); // reference is realized to be cyclic at a slightly different step
+        Assert.assertEquals("value", conf.format("${cyclic.c}"));
+        Assert.assertEquals("value", conf.format("${cyclic.d}"));
+        Assert.assertEquals("value", conf.get("cyclic.d"));
+    }
+
+    @Test
+    public void testRecursiveGet() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals("${reference.recursive}", conf.get("reference.recursive"));
+        Assert.assertEquals("${reference.recursive}", conf.get("reference.second"));
+    }
+
+    @Test
+    public void testDepth() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals("value", conf.get("depth.a"));
+        Assert.assertEquals("value", conf.get("depth.b"));
+        Assert.assertEquals("value value value", conf.format("${depth.a} ${depth.b} ${depth.a}"));
+    }
+
+    @Test
+    public void testSystemProperties() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals("${custom.system.property}", conf.get("system.value"));
+        System.getProperties().put("custom.system.property", "testvalue");
+        Assert.assertEquals("testvalue", conf.get("system.value"));
+        Assert.assertEquals("${custom.system.property}", conf.withoutSystemProperties().get("system.value"));
+    }
+
+    @Test
+    public void testEnvironmentProperties() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals(System.getenv().get("TMP"), conf.get("env.tmp"));
+        Assert.assertEquals("none", conf.withoutEnvironmentVariables().get("env.tmp"));
+    }
+
+    @Test
+    public void testMixedMode() {
+        final YyallConfiguration conf = YyallConfiguration.load(this.getClass().getResourceAsStream("/featuretest.yml"));
+        Assert.assertEquals(System.getProperty("user.home"), conf.get("multi.home"));
+        Assert.assertEquals("nouser", conf.withoutSystemProperties().get("multi.home"));
+        Assert.assertEquals("nouser", conf.withoutEnvironmentVariables().withoutSystemProperties().get("multi.home"));
+    }
 }

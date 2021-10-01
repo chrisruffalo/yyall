@@ -1,4 +1,4 @@
-package io.github.chrisruffalo.yyall.properties;
+package io.github.chrisruffalo.yyall.bean;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -68,5 +68,4 @@ public class PropertyTest {
             idx++;
         }
     }
-
 }

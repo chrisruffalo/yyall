@@ -1,6 +1,5 @@
 package io.github.chrisruffalo.yyall.resolver;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -14,9 +13,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import io.github.chrisruffalo.yyall.properties.PropertyNavigator;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtils;
+import io.github.chrisruffalo.yyall.exception.YyallRuntimeException;
+import io.github.chrisruffalo.yyall.bean.PropertyNavigator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -75,13 +73,6 @@ public class DefaultStringResolver implements StringResolver {
                 e -> e.getValue().toString()
             )
         );
-    }
-
-    public Map<String, String> defaultProperties() {
-        final Map<String, String> defaultMap = new HashMap<>(System.getProperties().size() + System.getenv().size());
-        defaultMap.putAll(System.getenv());
-        defaultMap.putAll(this.propertiesToMap(System.getProperties()));
-        return defaultMap;
     }
 
     @SuppressWarnings("unchecked")
@@ -171,9 +162,13 @@ public class DefaultStringResolver implements StringResolver {
                   // (nested maps - which the yaml object is - can be read with BeanUtils)
                   if(property == null && yaml != null) {
                       //final Object found = PropertyUtils.getProperty(yaml, currentToken);
-                      final Object found = PropertyNavigator.getProperty(yaml, currentToken);
-                      if(found != null) {
-                          property = found.toString();
+                      try {
+                          final Object found = PropertyNavigator.getProperty(yaml, currentToken);
+                          if (found != null) {
+                              property = found.toString();
+                          }
+                      } catch (IndexOutOfBoundsException iex) {
+                          throw new YyallRuntimeException(String.format("The property '%s' does not point to an indexed value that exists", currentToken), iex);
                       }
                   }
 
